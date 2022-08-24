@@ -62,9 +62,10 @@ function sysCall_threadmain()
     sensor = {}
 
     leftAndRightMotorHandles = { sim.getObjectHandle('KJunior_motorLeft'), sim.getObjectHandle('KJunior_motorRight') }
-    sensor[1] = sim.getObjectHandle('Proximity_sensor2')
-    sensor[2] = sim.getObjectHandle('Proximity_sensor3')
-    sensor[3] = sim.getObjectHandle('Proximity_sensor4')
+
+    for i = 1, 12 do
+        sensor[i] = sim.getObjectHandle('Proximity_sensor' .. i)
+    end
 
     sim.setJointTargetVelocity(leftAndRightMotorHandles[1], 20)
     sim.setJointTargetVelocity(leftAndRightMotorHandles[2], 20)
@@ -87,26 +88,24 @@ function sysCall_threadmain()
     delD = 0
 
     sensorDetection = {}
-    sensorDistance = { 0.5, 0.5, 0.5 }
+    sensorDistance = { 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5 }
 
     while sim.getSimulationState() ~= sim.simulation_advancing_abouttostop do
 
-        for i = 1, 3 do
+        for i = 2, 4 do
             result, distance = sim.readProximitySensor(sensor[i])
             if (result > 0) then
                 sensorDistance[i] = distance
             end
         end
 
-        print("Sensor 7: ", sensorDistance[1], "\tSensor 8: ", sensorDistance[2], "\t\tSensor 9: ", sensorDistance[3])
+        print("Sensor 2: ", sensorDistance[2], "\tSensor 3: ", sensorDistance[3], "\t\tSensor 4: ", sensorDistance[4])
 
-        -- d = math.min(sensorDistance[1], sensorDistance[2], sensorDistance[3])
-        d = sensorDistance[2]
+        d = sensorDistance[3]
 
         print('d = ', d, '\tdel_d = ', delD)
 
-        -- delD = (d - d_prev) * scaleDelD
-        delD = sensorDistance[1] - sensorDistance[3]
+        delD = sensorDistance[2] - sensorDistance[4]
 
         -- Premise
         a = mem_dR(d);
