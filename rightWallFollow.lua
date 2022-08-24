@@ -1,5 +1,7 @@
 -- Lua code for uploading to the differential drive robot in CoppeliaSim or V-REP
 
+-- Fuzzy controller for following a wall on the right of a differential drive mobile robot
+
 -- Triangular Membership Function
 function trimf(x, a, b, c)
 
@@ -60,15 +62,28 @@ function sysCall_threadmain()
     sensor = {}
 
     leftAndRightMotorHandles = { sim.getObjectHandle('KJunior_motorLeft'), sim.getObjectHandle('KJunior_motorRight') }
-    sensor[1] = sim.getObjectHandle('Proximity_sensor7')
-    sensor[2] = sim.getObjectHandle('Proximity_sensor8')
-    sensor[3] = sim.getObjectHandle('Proximity_sensor9')
+    sensor[1] = sim.getObjectHandle('Proximity_sensor2')
+    sensor[2] = sim.getObjectHandle('Proximity_sensor3')
+    sensor[3] = sim.getObjectHandle('Proximity_sensor4')
 
     sim.setJointTargetVelocity(leftAndRightMotorHandles[1], 20)
     sim.setJointTargetVelocity(leftAndRightMotorHandles[2], 20)
 
-    d = 0.7
-    d_prev = 0.7
+    -- Right Wheel Rule Base
+    local ruleBase_RightWheel = { { 10, 15, 20, 25, 30 },
+        { 15, 20, 30, 35, 30 },
+        { 30, 30, 40, 35, 30 },
+        { 30, 35, 30, 25, 15 },
+        { 25, 30, 20, 15, 10 } }
+
+    -- Left Wheel Rule Base
+    local ruleBase_LeftWheel = { { 0, 5, 10, 15, 20 },
+        { 5, 10, 20, 25, 30 },
+        { 15, 20, 40, 40, 40 },
+        { 15, 25, 40, 35, 30 },
+        { 10, 15, 30, 30, 25 } }
+
+    d = 0.5
     delD = 0
 
     sensorDetection = {}
@@ -76,51 +91,26 @@ function sysCall_threadmain()
 
     while sim.getSimulationState() ~= sim.simulation_advancing_abouttostop do
 
-        --repeat
         for i = 1, 3 do
             result, distance = sim.readProximitySensor(sensor[i])
             if (result > 0) then
                 sensorDistance[i] = distance
             end
         end
-        --until ( (sensorDetection[1] == 0) or (sensorDetection[2] == 0) or (sensorDetection[3] == 0) )
 
         print("Sensor 7: ", sensorDistance[1], "\tSensor 8: ", sensorDistance[2], "\t\tSensor 9: ", sensorDistance[3])
 
-        --if (sensorDetection[1] == 1) and (sensorDetection[2] == 1) and (sensorDetection[3] == 1) then
-        d = math.min(sensorDistance[1], sensorDistance[2], sensorDistance[3])
-        --end
-
-        --d = sensorDistance[2]
+        -- d = math.min(sensorDistance[1], sensorDistance[2], sensorDistance[3])
+        d = sensorDistance[2]
 
         print('d = ', d, '\tdel_d = ', delD)
 
-        delD = d - d_prev
-
-        -- -- Sensor Values
-        -- d = 0.885;
-        -- delD = -0.245;
-
-        -- Right Wheel Rule Base
-        ruleBase_RightWheel = { { 10, 15, 20, 25, 30 },
-            { 15, 20, 30, 35, 30 },
-            { 30, 30, 40, 35, 30 },
-            { 30, 35, 30, 25, 15 },
-            { 25, 30, 20, 15, 10 } }
-
-        -- Left Wheel Rule Base
-        ruleBase_LeftWheel = { { 0, 5, 10, 15, 20 },
-            { 5, 10, 20, 25, 30 },
-            { 15, 20, 40, 40, 40 },
-            { 15, 25, 40, 35, 30 },
-            { 10, 15, 30, 30, 25 } }
+        -- delD = (d - d_prev) * scaleDelD
+        delD = sensorDistance[1] - sensorDistance[3]
 
         -- Premise
         a = mem_dR(d);
         b = mem_del_dR(delD);
-
-        -- print("dR: ", table.concat(a, "\t")) -- Printing dR
-        -- print("del_dR: ", table.concat(b, "\t")) -- Printing del_dR
 
         premise = {}
 
@@ -166,8 +156,6 @@ function sysCall_threadmain()
 
         sim.setJointTargetVelocity(leftAndRightMotorHandles[1], wL)
         sim.setJointTargetVelocity(leftAndRightMotorHandles[2], wR)
-
-        d_prev = d
 
         sim.switchThread()
 
