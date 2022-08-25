@@ -104,7 +104,7 @@ function sysCall_threadmain()
         d = math.min(sensorDistance[2], sensorDistance[3], sensorDistance[4]) -- Right side distance
 
         d1 = d -- Dummy variable for corridor following
-        d2 = math.min(sensorDistance[9], sensorDistance[9], sensorDistance[10]) -- Left side distance
+        d2 = math.min(sensorDistance[8], sensorDistance[9], sensorDistance[10]) -- Left side distance
 
         d3 = (d1 + d2) / 2 -- Distance to be attained from the right wall within the corridor
         scaleD = 0.5 / d3
